@@ -3,6 +3,12 @@ set(PCSX2_DEFS "")
 
 include(GNUInstallDirs)
 
+# Use the target processor for cross-compiles, fall back to host when unset.
+set(PCSX2_TARGET_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}")
+if(NOT PCSX2_TARGET_PROCESSOR)
+	set(PCSX2_TARGET_PROCESSOR "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+endif()
+
 #-------------------------------------------------------------------------------
 # Misc option
 #-------------------------------------------------------------------------------
@@ -76,8 +82,8 @@ mark_as_advanced(CMAKE_C_FLAGS_DEVEL CMAKE_CXX_FLAGS_DEVEL CMAKE_LINKER_FLAGS_DE
 #-------------------------------------------------------------------------------
 # Select the architecture
 #-------------------------------------------------------------------------------
-if("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "x86_64" OR "${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "amd64" OR
-   "${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "AMD64" OR "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "x86_64")
+if("${PCSX2_TARGET_PROCESSOR}" STREQUAL "x86_64" OR "${PCSX2_TARGET_PROCESSOR}" STREQUAL "amd64" OR
+   "${PCSX2_TARGET_PROCESSOR}" STREQUAL "AMD64" OR "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "x86_64")
 	# Multi-ISA only exists on x86.
 	option(DISABLE_ADVANCE_SIMD "Disable advance use of SIMD (SSE2+ & AVX)" OFF)
 
@@ -108,12 +114,21 @@ if("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "x86_64" OR "${CMAKE_HOST_SYSTEM_PR
 			endif()
 		endif()
 	endif()
-elseif("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64" OR "${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "aarch64" OR
+elseif("${PCSX2_TARGET_PROCESSOR}" STREQUAL "arm64" OR "${PCSX2_TARGET_PROCESSOR}" STREQUAL "aarch64" OR
        "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "arm64")
-	message(STATUS "Building for Apple Silicon (ARM64).")
+	if(SWITCH)
+		message(STATUS "Building for Nintendo Switch (ARM64).")
+	else()
+		message(STATUS "Building for Apple Silicon (ARM64).")
+	endif()
 	list(APPEND PCSX2_DEFS _M_ARM64=1)
 	set(_M_ARM64 TRUE)
-	add_compile_options("-march=armv8.4-a" "-mcpu=apple-m1")
+	if(SWITCH)
+		message(STATUS "Configuring ARM64 flags for Nintendo Switch.")
+		add_compile_options("-march=armv8-a" "-mcpu=cortex-a57")
+	else()
+		add_compile_options("-march=armv8.4-a" "-mcpu=apple-m1")
+	endif()
 
 	# If we're running on Linux, we need to detect the page/cache line size.
 	# It could be a virtual machine with 4K pages, or 16K with Asahi.
@@ -130,8 +145,17 @@ elseif("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "arm64" OR "${CMAKE_HOST_SYSTEM
 		# Value of std::hardware_destructive_interference_size for ARM64 on MSVC toolset 14.40.33807
 		list(APPEND PCSX2_DEFS OVERRIDE_HOST_CACHE_LINE_SIZE=64)
 	endif()
+	if(SWITCH)
+		# Switch uses 4KB pages and 64-byte cache lines.
+		list(APPEND PCSX2_DEFS OVERRIDE_HOST_PAGE_SIZE=0x1000)
+		list(APPEND PCSX2_DEFS OVERRIDE_HOST_CACHE_LINE_SIZE=64)
+	endif()
 else()
-	message(FATAL_ERROR "Unsupported architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+	message(FATAL_ERROR "Unsupported architecture: ${PCSX2_TARGET_PROCESSOR}")
+endif()
+
+if(SWITCH)
+	list(APPEND PCSX2_DEFS PCSX2_SWITCH=1)
 endif()
 
 # Require C++20.

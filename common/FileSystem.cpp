@@ -279,6 +279,18 @@ bool Path::IsAbsolute(const std::string_view path)
 	return (path.length() >= 3 && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) &&
 			   path[1] == ':' && (path[2] == '/' || path[2] == '\\')) ||
 		   (path.length() >= 3 && path[0] == '\\' && path[1] == '\\');
+#elif defined(PCSX2_SWITCH)
+	if (path.length() >= 1 && path[0] == '/')
+		return true;
+
+	const std::string_view::size_type colon = path.find(':');
+	if (colon != std::string_view::npos && (colon + 1) < path.size())
+	{
+		const char next = path[colon + 1];
+		return (next == '/' || next == '\\');
+	}
+
+	return false;
 #else
 	return (path.length() >= 1 && path[0] == '/');
 #endif
@@ -822,6 +834,9 @@ std::vector<std::string> FileSystem::GetRootDirectoryList()
 			ptr += len + 1u;
 		}
 	}
+#elif defined(PCSX2_SWITCH)
+	results.emplace_back("sdmc:/");
+	results.emplace_back("romfs:/");
 #else
 	const char* home_path = std::getenv("HOME");
 	if (home_path)
@@ -2570,6 +2585,8 @@ std::string FileSystem::GetProgramPath()
 
 	buffer[cb] = '\0';
 	return buffer;
+#elif defined(PCSX2_SWITCH)
+	return "sdmc:/switch/pcsx2/pcsx2.nro";
 #else
 	return {};
 #endif

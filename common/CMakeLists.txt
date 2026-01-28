@@ -154,6 +154,12 @@ elseif(APPLE)
 		"-framework Foundation"
 		"-framework IOKit"
 	)
+elseif(SWITCH)
+	target_sources(common PRIVATE
+		Switch/SwitchHostSys.cpp
+		Switch/SwitchThreads.cpp
+		Switch/SwitchMisc.cpp
+	)
 else()
 	target_sources(common PRIVATE
 		Linux/LnxHostSys.cpp
@@ -186,7 +192,7 @@ if (USE_GCC AND CMAKE_INTERPROCEDURAL_OPTIMIZATION)
 	set_source_files_properties(FastJmp.cpp PROPERTIES COMPILE_FLAGS -fno-lto)
 endif()
 
-if(NOT WIN32)
+if(NOT WIN32 AND NOT SWITCH)
 	# libcurl-based HTTPDownloader
 	target_sources(common PRIVATE
 		HTTPDownloaderCurl.cpp

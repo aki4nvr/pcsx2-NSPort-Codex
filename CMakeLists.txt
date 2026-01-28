@@ -81,7 +81,7 @@ No support will be provided, continue at your own risk.
 *********************************************************")
 endif()
 
-if(_M_ARM64)
+if(_M_ARM64 AND APPLE)
 	message(WARNING "
 *************** UNSUPPORTED CONFIGURATION ***************
 

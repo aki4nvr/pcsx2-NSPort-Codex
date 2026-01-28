@@ -905,3 +905,38 @@ bool AudioStreamParameters::operator==(const AudioStreamParameters& rhs) const
 {
 	return (std::memcmp(this, &rhs, sizeof(*this)) == 0);
 }
+
+#if defined(PCSX2_SWITCH)
+std::vector<std::pair<std::string, std::string>> AudioStream::GetCubebDriverNames()
+{
+	return {};
+}
+
+std::vector<AudioStream::DeviceInfo> AudioStream::GetCubebOutputDevices(const char* driver)
+{
+	(void)driver;
+	return {};
+}
+
+std::unique_ptr<AudioStream> AudioStream::CreateCubebAudioStream(u32 sample_rate, const AudioStreamParameters& parameters,
+	const char* driver_name, const char* device_name, bool stretch_enabled, Error* error)
+{
+	(void)sample_rate;
+	(void)parameters;
+	(void)driver_name;
+	(void)device_name;
+	(void)stretch_enabled;
+	Error::SetStringView(error, "Cubeb backend is not available on Nintendo Switch.");
+	return nullptr;
+}
+
+std::unique_ptr<AudioStream> AudioStream::CreateSDLAudioStream(u32 sample_rate, const AudioStreamParameters& parameters,
+	bool stretch_enabled, Error* error)
+{
+	(void)sample_rate;
+	(void)parameters;
+	(void)stretch_enabled;
+	Error::SetStringView(error, "SDL backend is not available on Nintendo Switch.");
+	return nullptr;
+}
+#endif

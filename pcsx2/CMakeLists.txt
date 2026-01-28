@@ -821,8 +821,13 @@ set(pcsx2DebugToolsHeaders
 
 set(pcsx2HostSources
 	Host/AudioStream.cpp
-	Host/CubebAudioStream.cpp
-	Host/SDLAudioStream.cpp)
+)
+if(NOT SWITCH)
+	list(APPEND pcsx2HostSources
+		Host/CubebAudioStream.cpp
+		Host/SDLAudioStream.cpp
+	)
+endif()
 
 set(pcsx2HostHeaders
 	Host/AudioStream.h
@@ -846,13 +851,19 @@ set(pcsx2ImGuiHeaders
 set(pcsx2InputSources
 	Input/InputManager.cpp
 	Input/InputSource.cpp
-	Input/SDLInputSource.cpp
 )
 set(pcsx2InputHeaders
 	Input/InputManager.h
 	Input/InputSource.h
-	Input/SDLInputSource.h
 )
+if(NOT SWITCH)
+	list(APPEND pcsx2InputSources
+		Input/SDLInputSource.cpp
+	)
+	list(APPEND pcsx2InputHeaders
+		Input/SDLInputSource.h
+	)
+endif()
 
 if(APPLE)
 	list(APPEND pcsx2GSSources
@@ -900,6 +911,16 @@ set(pcsx2OSXSources
 set(pcsx2FreeBSDSources
 	CDVD/Darwin/DriveUtility.cpp
 	CDVD/Darwin/IOCtlSrc.cpp
+	)
+
+set(pcsx2SwitchSources
+	Switch/SwitchPlatform.cpp
+	Switch/SwitchHost.cpp
+	)
+
+set(pcsx2SwitchHeaders
+	Switch/SwitchPlatform.h
+	Switch/SwitchHost.h
 	)
 
 # Linux headers
@@ -1116,6 +1137,13 @@ if(LINUX)
 	)
 endif()
 
+if(SWITCH)
+	target_sources(PCSX2 PRIVATE
+		${pcsx2SwitchSources}
+		${pcsx2SwitchHeaders}
+	)
+endif()
+
 if(WIN32)
 	target_sources(PCSX2 PRIVATE
 		${pcsx2WindowsSources}
@@ -1143,12 +1171,10 @@ target_link_libraries(PCSX2_FLAGS INTERFACE
 	libchdr
 	libzip::zip
 	cpuinfo
-	cubeb
 	rcheevos
 	discord-rpc
 	simpleini
 	freesurround
-	SDL3::SDL3
 	ZLIB::ZLIB
 	LZ4::LZ4
 	SoundTouch::SoundTouch
@@ -1161,6 +1187,13 @@ target_link_libraries(PCSX2_FLAGS INTERFACE
 	plutosvg::plutosvg
 	${LIBC_LIBRARIES}
 )
+
+if(NOT SWITCH)
+	target_link_libraries(PCSX2_FLAGS INTERFACE
+		cubeb
+		SDL3::SDL3
+	)
+endif()
 
 if(WIN32)
 	target_link_libraries(PCSX2_FLAGS INTERFACE
@@ -1185,7 +1218,7 @@ if(WIN32)
 		dwmapi.lib
 		OneCore.lib
 	)
-else()
+elseif(NOT SWITCH)
 	target_link_libraries(PCSX2_FLAGS INTERFACE
 		PCAP::PCAP
 	)
