@@ -2117,6 +2117,11 @@ void Pcsx2Config::ClearInvalidPerGameConfiguration(SettingsInterface* si)
 
 void EmuFolders::SetAppRoot()
 {
+#if defined(PCSX2_SWITCH)
+	AppRoot = "sdmc:/switch/pcsx2";
+	Console.WriteLnFmt("AppRoot Directory: {}", AppRoot);
+	return;
+#endif
 	std::string program_path = FileSystem::GetProgramPath();
 	Console.WriteLnFmt("Program Path: {}", program_path);
 	AppRoot = Path::Canonicalize(Path::GetDirectory(program_path));
@@ -2135,6 +2140,18 @@ void EmuFolders::SetAppRoot()
 
 bool EmuFolders::SetResourcesDirectory()
 {
+#if defined(PCSX2_SWITCH)
+	Resources = Path::Combine(AppRoot, "resources");
+	Console.WriteLnFmt("Resources Directory: {}", Resources);
+
+	if (!FileSystem::DirectoryExists(Resources.c_str()))
+	{
+		Console.Error("Resources directory is missing.");
+		return false;
+	}
+
+	return true;
+#endif
 #ifndef __APPLE__
 #ifndef PCSX2_APP_DATADIR
 	// On Windows/Linux, these are in the binary directory.
@@ -2222,6 +2239,8 @@ bool EmuFolders::SetDataDirectory(Error* error)
 		const char* home_dir = getenv("HOME");
 		if (home_dir)
 			DataRoot = Path::RealPath(Path::Combine(home_dir, MAC_DATA_DIR));
+#elif defined(PCSX2_SWITCH)
+		DataRoot = "sdmc:/switch/pcsx2";
 #endif
 	}
 

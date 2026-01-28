@@ -55,6 +55,25 @@
                 "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        },
+        {
+            "name": "switch-debug",
+            "displayName": "Switch Debug",
+            "description": "Nintendo Switch build using devkitA64.",
+            "binaryDir": "${sourceDir}/build-switch",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/devkitA64.cmake",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ENABLE_QT_UI": "OFF",
+                "ENABLE_TESTS": "OFF",
+                "ENABLE_GSRUNNER": "OFF",
+                "USE_OPENGL": "OFF",
+                "USE_VULKAN": "OFF",
+                "X11_API": "OFF",
+                "WAYLAND_API": "OFF",
+                "USE_BACKTRACE": "OFF"
+            }
         }
     ]
 }

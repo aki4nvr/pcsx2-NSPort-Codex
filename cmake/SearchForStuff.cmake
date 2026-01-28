@@ -6,6 +6,18 @@ find_package(Git)
 # Require threads on all OSes.
 find_package(Threads REQUIRED)
 
+if(SWITCH)
+	# Switch builds are headless for now; avoid desktop-only dependencies.
+	set(ENABLE_QT_UI OFF CACHE BOOL "" FORCE)
+	set(ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+	set(ENABLE_GSRUNNER OFF CACHE BOOL "" FORCE)
+	set(USE_OPENGL OFF CACHE BOOL "" FORCE)
+	set(USE_VULKAN OFF CACHE BOOL "" FORCE)
+	set(X11_API OFF CACHE BOOL "" FORCE)
+	set(WAYLAND_API OFF CACHE BOOL "" FORCE)
+	set(USE_BACKTRACE OFF CACHE BOOL "" FORCE)
+endif()
+
 # Dependency libraries.
 # On macOS, Mono.framework contains an ancient version of libpng.  We don't want that.
 # Avoid it by telling cmake to avoid finding frameworks while we search for libpng.
@@ -17,7 +29,9 @@ find_package(ZLIB REQUIRED) # v1.3, but Mac uses the SDK version.
 find_package(Zstd 1.5.5 REQUIRED)
 find_package(LZ4 REQUIRED)
 find_package(WebP REQUIRED) # v1.3.2, spews an error on Linux because no pkg-config.
-find_package(SDL3 3.2.6 REQUIRED)
+if(NOT SWITCH)
+	find_package(SDL3 3.2.6 REQUIRED)
+endif()
 find_package(Freetype 2.12 REQUIRED)
 find_package(plutovg 1.1.0 REQUIRED)
 find_package(plutosvg 0.0.7 REQUIRED)
@@ -34,9 +48,11 @@ if (WIN32)
 	set(FFMPEG_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/3rdparty/ffmpeg/include")
 	find_package(Vtune)
 else()
-	find_package(CURL REQUIRED)
-	find_package(PCAP REQUIRED)
-	find_package(Vtune)
+	if(NOT SWITCH)
+		find_package(CURL REQUIRED)
+		find_package(PCAP REQUIRED)
+		find_package(Vtune)
+	endif()
 
 	# Use bundled ffmpeg v4.x.x headers if we can't locate it in the system.
 	# We'll try to load it dynamically at runtime.
@@ -49,7 +65,7 @@ else()
 	## Use CheckLib package to find module
 	include(CheckLib)
 
-	if(UNIX AND NOT APPLE)
+	if(UNIX AND NOT APPLE AND NOT SWITCH)
 		if(LINUX)
 			check_lib(LIBUDEV libudev libudev.h)
 		endif()
@@ -102,9 +118,11 @@ if(USE_VULKAN)
 	add_subdirectory(3rdparty/vulkan EXCLUDE_FROM_ALL)
 endif()
 
-add_subdirectory(3rdparty/cubeb EXCLUDE_FROM_ALL)
-disable_compiler_warnings_for_target(cubeb)
-disable_compiler_warnings_for_target(speex)
+if(NOT SWITCH)
+	add_subdirectory(3rdparty/cubeb EXCLUDE_FROM_ALL)
+	disable_compiler_warnings_for_target(cubeb)
+	disable_compiler_warnings_for_target(speex)
+endif()
 
 # Find the Qt components that we need.
 if(ENABLE_QT_UI)
